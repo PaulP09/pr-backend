@@ -1,7 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import { register, login, me, authMiddleware } from './auth.js';
 import { postLocation, getHistory, getGroupLatest } from './routes/locations.js';
 import { listPlaces, createPlace, deletePlace } from './routes/places.js';
@@ -38,6 +42,9 @@ app.get('/groups', authMiddleware, myGroups);
 // OwnTracks (Hintergrund-Tracking). /pub nutzt Basic-Auth der App, nicht JWT.
 app.post('/owntracks/pub', owntracksPub);
 app.get('/owntracks/config', authMiddleware, owntracksConfig);
+
+// PR Web-App ausliefern (Login, Karte, Orte) – liegt im Ordner ../web
+app.use(express.static(path.join(__dirname, '..', 'web')));
 
 const server = http.createServer(app);
 setupWebSocket(server);

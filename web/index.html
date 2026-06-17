@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>PR</title>
+<meta name="theme-color" content="#1A1726" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="apple-touch-icon" href="/icons/icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PR" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1A1726; --surface:#F4F2F7; --card:#FFFFFF;
+    --rose:#F2566E; --teal:#18B6A4; --amber:#F0A53C;
+    --muted:#6E6A80; --line:#E7E4EE;
+    --disp:'Bricolage Grotesque',-apple-system,system-ui,sans-serif;
+    --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:var(--body);color:var(--ink);background:var(--ink)}
+  #map{position:fixed;inset:0;background:#dfe5ea;z-index:0}
+  button{font-family:var(--body);cursor:pointer}
+  .wordmark{font-family:var(--disp);font-weight:800;letter-spacing:-.03em}
+
+  /* ---------- Auth / Onboard ---------- */
+  .veil{position:fixed;inset:0;z-index:50;display:none;place-items:center;
+    background:radial-gradient(120% 90% at 50% 0%,#272138 0%,var(--ink) 60%);padding:24px}
+  .veil.on{display:grid}
+  .panel{width:100%;max-width:380px;background:var(--card);border-radius:24px;padding:28px 24px;
+    box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  .brand{font-family:var(--disp);font-weight:800;font-size:52px;line-height:1;letter-spacing:-.04em;
+    color:var(--rose);text-align:center;margin:4px 0 2px}
+  .brand .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--rose);
+    transform:translateY(-26px);margin-left:2px}
+  .sub{text-align:center;color:var(--muted);font-size:14px;margin:0 0 22px}
+  .field{margin:0 0 12px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
+  .field input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:13px;font-size:16px;
+    background:#FBFAFD;outline:none}
+  .field input:focus{border-color:var(--rose)}
+  .btn{width:100%;padding:14px;border:none;border-radius:13px;background:var(--rose);color:#fff;
+    font-size:16px;font-weight:700;letter-spacing:.01em}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--muted);font-weight:600}
+  .btn.line{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .switch{display:flex;gap:6px;background:#F1EFF6;padding:4px;border-radius:12px;margin:0 0 20px}
+  .switch button{flex:1;border:none;background:transparent;padding:9px;border-radius:9px;font-weight:600;color:var(--muted)}
+  .switch button.sel{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .err{color:#C8324C;font-size:13px;min-height:18px;margin:2px 2px 10px;text-align:center}
+  .hint{font-size:13px;color:var(--muted);text-align:center;margin:14px 2px 0;line-height:1.5}
+
+  /* ---------- Top bar ---------- */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:10px;
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    background:linear-gradient(#1a1726cc,#1a172600);pointer-events:none}
+  .topbar .wordmark{color:#fff;font-size:26px;pointer-events:auto;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+  .topbar .spacer{flex:1}
+  .pill{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;background:#fff;border:none;
+    border-radius:999px;padding:9px 14px;font-weight:700;font-size:14px;color:var(--ink);
+    box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .pill .led{width:9px;height:9px;border-radius:50%;background:#C9C6D2}
+  .pill.on .led{background:var(--rose);box-shadow:0 0 0 0 var(--rose);animation:led 1.6s infinite}
+  @keyframes led{0%{box-shadow:0 0 0 0 rgba(242,86,110,.6)}100%{box-shadow:0 0 0 8px rgba(242,86,110,0)}}
+  .icon-btn{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:none;background:#fff;
+    box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:20px;color:var(--ink);display:grid;place-items:center}
+
+  /* ---------- People sheet ---------- */
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;
+    padding:14px 12px calc(env(safe-area-inset-bottom) + 14px);
+    background:linear-gradient(#f4f2f700,var(--surface) 26%)}
+  .sheet-inner{background:var(--card);border-radius:22px;box-shadow:0 -2px 30px rgba(26,23,38,.14);
+    overflow:hidden;max-width:560px;margin:0 auto}
+  .row{display:flex;align-items:center;gap:13px;padding:13px 16px;border-top:1px solid var(--line)}
+  .row:first-child{border-top:none}
+  .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;
+    font-size:15px;flex:none;box-shadow:0 2px 6px rgba(0,0,0,.16)}
+  .who{flex:1;min-width:0}
+  .who b{font-size:15px;font-weight:700}
+  .who .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .who .meta .liveTag{color:var(--rose);font-weight:700}
+  .rowbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font-size:12.5px;
+    font-weight:600;color:var(--ink)}
+  .rowbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* ---------- Map markers ---------- */
+  .mk{position:relative;width:42px;height:42px;border-radius:50%;background:var(--c);display:grid;
+    place-items:center;color:#fff;font-weight:800;font-size:14px;border:3px solid #fff;
+    box-shadow:0 3px 10px rgba(0,0,0,.35)}
+  .mk.live::before{content:'';position:absolute;inset:-7px;border-radius:50%;border:2.5px solid var(--c);
+    animation:ring 2.1s ease-out infinite}
+  @keyframes ring{0%{transform:scale(.75);opacity:.85}100%{transform:scale(1.9);opacity:0}}
+
+  /* ---------- Modal ---------- */
+  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:flex-end;justify-content:center;
+    background:rgba(26,23,38,.45)}
+  .modal.on{display:flex}
+  .modal-card{background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;
+    padding:8px 20px calc(env(safe-area-inset-bottom) + 22px);max-height:86vh;overflow:auto}
+  .grab{width:40px;height:4px;border-radius:2px;background:#D9D6E0;margin:8px auto 12px}
+  .modal h2{font-family:var(--disp);font-weight:800;font-size:22px;margin:4px 2px 14px}
+  .place{display:flex;align-items:center;gap:10px;padding:12px 2px;border-top:1px solid var(--line)}
+  .place:first-of-type{border-top:none}
+  .place .nm{flex:1;font-weight:600}
+  .codebox{display:flex;gap:8px;align-items:center;background:#F6F5FA;border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;margin:6px 0;font-family:ui-monospace,monospace;font-size:13px;
+    word-break:break-all}
+  .copy{flex:none;border:none;background:var(--ink);color:#fff;border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px}
+  .steps{font-size:14px;color:#3a3650;line-height:1.6;padding-left:18px;margin:8px 0}
+  .steps li{margin:6px 0}
+  .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 120px);left:50%;transform:translateX(-50%);
+    z-index:80;background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  .small{font-size:12.5px;color:var(--muted)}
+  .mt{margin-top:14px}
+  @media (prefers-reduced-motion: reduce){ .mk.live::before,.pill.on .led{animation:none} }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- ===== Auth ===== -->
+<div class="veil on" id="auth">
+  <div class="panel">
+    <div class="brand">PR<span class="dot"></span></div>
+    <p class="sub">Seht, wo ihr seid.</p>
+    <div class="switch">
+      <button id="tabLogin" class="sel" onclick="setMode('login')">Anmelden</button>
+      <button id="tabReg" onclick="setMode('reg')">Registrieren</button>
+    </div>
+    <div class="field" id="fName" style="display:none">
+      <label>Name</label><input id="iName" autocomplete="name" placeholder="Wie du heißt" />
+    </div>
+    <div class="field"><label>E-Mail</label><input id="iEmail" type="email" autocomplete="email" placeholder="du@beispiel.at" /></div>
+    <div class="field"><label>Passwort</label><input id="iPass" type="password" autocomplete="current-password" placeholder="••••••••" /></div>
+    <div class="err" id="authErr"></div>
+    <button class="btn" id="authBtn" onclick="submitAuth()">Anmelden</button>
+  </div>
+</div>
+
+<!-- ===== Onboard (Gruppe) ===== -->
+<div class="veil" id="onboard">
+  <div class="panel">
+    <div class="brand">PR<span class="dot"></span></div>
+    <p class="sub">Verbindet euch zu zweit.</p>
+    <button class="btn" onclick="createGroup()">Neue Gruppe erstellen</button>
+    <p class="hint">Du bekommst einen Code, den du teilst.</p>
+    <div class="mt" style="height:1px;background:var(--line);margin:18px 0"></div>
+    <div class="field"><label>Mit Code beitreten</label><input id="iCode" placeholder="Einladungscode" /></div>
+    <div class="err" id="obErr"></div>
+    <button class="btn line" onclick="joinGroup()">Beitreten</button>
+    <button class="btn ghost mt" onclick="logout()">Abmelden</button>
+  </div>
+</div>
+
+<!-- ===== App ===== -->
+<div class="topbar" id="topbar" style="display:none">
+  <span class="wordmark">PR</span>
+  <span class="spacer"></span>
+  <button class="pill" id="shareBtn" onclick="toggleShare()"><span class="led"></span><span id="shareTxt">Teilen aus</span></button>
+  <button class="icon-btn" onclick="openMenu()">⋯</button>
+</div>
+
+<div class="sheet" id="sheet" style="display:none">
+  <div class="sheet-inner" id="people"></div>
+</div>
+
+<!-- ===== Modal ===== -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div class="grab"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ---------- Speicher (mit Fallback) ---------- */
+const mem={};
+const store={
+  get(k){try{return localStorage.getItem(k)}catch{return mem[k]??null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch{mem[k]=v}},
+  del(k){try{localStorage.removeItem(k)}catch{delete mem[k]}}
+};
+
+const API=location.origin;
+let token=store.get('pr_token');
+let me=null, map=null, ws=null, watchId=null, lastSent=0, mode='login';
+const members={};            // id -> {id,name,lat,lng,battery,recordedAt,marker,color}
+const routeLayers={};        // id -> polyline
+let placesLayer=null;
+const palette=['#F2566E','#18B6A4','#F0A53C','#7C6CF0','#3F8EF0'];
+let colorIdx=0; const colorMap={};
+function colorFor(id){ if(!colorMap[id]) colorMap[id]=palette[colorIdx++%palette.length]; return colorMap[id]; }
+function initials(name){ return (name||'?').trim().slice(0,2).toUpperCase(); }
+
+/* ---------- API ---------- */
+async function api(path,opts={}){
+  const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+  if(token) headers.Authorization='Bearer '+token;
+  const res=await fetch(API+path,Object.assign({},opts,{headers}));
+  if(res.status===401){ logout(); throw new Error('Bitte neu anmelden'); }
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||('Fehler '+res.status));
+  return data;
+}
+
+/* ---------- Auth UI ---------- */
+function setMode(m){
+  mode=m;
+  document.getElementById('tabLogin').classList.toggle('sel',m==='login');
+  document.getElementById('tabReg').classList.toggle('sel',m==='reg');
+  document.getElementById('fName').style.display=m==='reg'?'block':'none';
+  document.getElementById('authBtn').textContent=m==='reg'?'Konto erstellen':'Anmelden';
+  document.getElementById('iPass').autocomplete=m==='reg'?'new-password':'current-password';
+  document.getElementById('authErr').textContent='';
+}
+async function submitAuth(){
+  const email=val('iEmail'), pass=val('iPass'), name=val('iName');
+  const err=document.getElementById('authErr'); err.textContent='';
+  try{
+    let r;
+    if(mode==='reg') r=await api('/auth/register',{method:'POST',body:JSON.stringify({email,password:pass,displayName:name})});
+    else r=await api('/auth/login',{method:'POST',body:JSON.stringify({email,password:pass})});
+    token=r.token; store.set('pr_token',token); me=r.user;
+    await afterLogin();
+  }catch(e){ err.textContent=e.message; }
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+
+/* ---------- Nach Login: Gruppe pruefen ---------- */
+async function afterLogin(){
+  if(!me){ const r=await api('/auth/me'); me=r.user; }
+  const {groups}=await api('/groups');
+  if(!groups || groups.length===0){ showOnboard(); return; }
+  showApp();
+}
+async function createGroup(){
+  try{ await api('/groups',{method:'POST',body:JSON.stringify({name:'PR'})}); showApp(); }
+  catch(e){ document.getElementById('obErr').textContent=e.message; }
+}
+async function joinGroup(){
+  const code=val('iCode');
+  try{ await api('/groups/join',{method:'POST',body:JSON.stringify({inviteCode:code})}); showApp(); }
+  catch(e){ document.getElementById('obErr').textContent=e.message; }
+}
+
+/* ---------- Views ---------- */
+function show(id,on){ document.getElementById(id).classList.toggle('on',on); }
+function showOnboard(){ show('auth',false); show('onboard',true); }
+function showApp(){
+  show('auth',false); show('onboard',false);
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('sheet').style.display='block';
+  if(!map) initMap();
+  loadGroup();
+  connectWS();
+  if(!showApp._poll) showApp._poll=setInterval(loadGroup,25000);
+}
+function logout(){
+  stopSharing(); store.del('pr_token'); token=null; me=null;
+  if(ws){ try{ws.close()}catch{} ws=null; }
+  if(showApp._poll){ clearInterval(showApp._poll); showApp._poll=null; }
+  document.getElementById('topbar').style.display='none';
+  document.getElementById('sheet').style.display='none';
+  closeModal(); show('onboard',false); show('auth',true);
+}
+
+/* ---------- Karte ---------- */
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:false}).setView([47.6,13.9],6);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    maxZoom:20, subdomains:'abcd'
+  }).addTo(map);
+  L.control.attribution({prefix:false,position:'bottomleft'})
+    .addAttribution('© OpenStreetMap © CARTO').addTo(map);
+  placesLayer=L.layerGroup().addTo(map);
+}
+function isLive(recordedAt){ return recordedAt && (Date.now()-new Date(recordedAt).getTime())<5*60*1000; }
+function markerIcon(name,color,live){
+  return L.divIcon({className:'',iconSize:[42,42],iconAnchor:[21,21],
+    html:`<div class="mk ${live?'live':''}" style="--c:${color}">${initials(name)}</div>`});
+}
+function updateMember(id,d){
+  id=Number(id);
+  const m=members[id]||(members[id]={id});
+  Object.assign(m, d);
+  if(d.name) m.name=d.name;
+  m.color=colorFor(id);
+  const live=isLive(m.recordedAt);
+  if(typeof m.lat==='number'){
+    const pos=[m.lat,m.lng];
+    if(!m.marker){ m.marker=L.marker(pos,{icon:markerIcon(m.name,m.color,live)}).addTo(map);
+      m.marker.on('click',()=>map.flyTo(pos,15)); }
+    else { m.marker.setLatLng(pos); m.marker.setIcon(markerIcon(m.name,m.color,live)); }
+  }
+  renderPeople();
+}
+async function loadGroup(){
+  try{
+    const {members:list}=await api('/locations/group');
+    // mich selbst sicher anzeigen, auch ohne Position
+    if(me && !members[me.id]) updateMember(me.id,{name:me.display_name});
+    list.forEach(r=>updateMember(r.user_id,{
+      name:r.display_name, lat:r.lat, lng:r.lng, battery:r.battery, recordedAt:r.recorded_at
+    }));
+    fitOnce();
+  }catch(e){}
+}
+let fitted=false;
+function fitOnce(){
+  if(fitted) return;
+  const pts=Object.values(members).filter(m=>typeof m.lat==='number').map(m=>[m.lat,m.lng]);
+  if(pts.length){ fitted=true; if(pts.length===1) map.setView(pts[0],14); else map.fitBounds(pts,{padding:[60,60],maxZoom:15}); }
+}
+
+/* ---------- People-Liste ---------- */
+function timeAgo(ts){
+  if(!ts) return 'noch kein Standort';
+  const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
+  if(s<60) return 'gerade eben';
+  if(s<3600) return 'vor '+Math.floor(s/60)+' Min';
+  if(s<86400) return 'vor '+Math.floor(s/3600)+' Std';
+  return 'vor '+Math.floor(s/86400)+' Tg';
+}
+function renderPeople(){
+  const box=document.getElementById('people');
+  const list=Object.values(members).sort((a,b)=>{
+    if(me){ if(a.id===me.id)return -1; if(b.id===me.id)return 1; }
+    return (new Date(b.recordedAt||0))-(new Date(a.recordedAt||0));
+  });
+  box.innerHTML=list.map(m=>{
+    const live=isLive(m.recordedAt);
+    const meta=live?`<span class="liveTag">live</span>`:timeAgo(m.recordedAt);
+    const batt=(m.battery!=null)?` · ${m.battery}%`:'';
+    const isMe=me&&m.id===me.id;
+    const routeOn=!!routeLayers[m.id];
+    return `<div class="row">
+      <div class="av" style="background:${colorFor(m.id)}">${initials(m.name)}</div>
+      <div class="who"><b>${escapeHtml(m.name||'—')}${isMe?' (du)':''}</b>
+        <div class="meta">${meta}${batt}</div></div>
+      ${typeof m.lat==='number'?`<button class="rowbtn ${routeOn?'act':''}" onclick="toggleRoute(${m.id})">Weg heute</button>`:''}
+    </div>`;
+  }).join('');
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- Tagesweg ---------- */
+async function toggleRoute(id){
+  if(routeLayers[id]){ map.removeLayer(routeLayers[id]); delete routeLayers[id]; renderPeople(); return; }
+  try{
+    const {points}=await api('/locations/history?userId='+id);
+    if(!points.length){ toast('Heute noch kein Weg aufgezeichnet'); return; }
+    const line=points.map(p=>[p.lat,p.lng]);
+    routeLayers[id]=L.polyline(line,{color:colorFor(id),weight:4,opacity:.85}).addTo(map);
+    map.fitBounds(line,{padding:[60,60]});
+    renderPeople();
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- Teilen (Vordergrund) ---------- */
+function toggleShare(){ watchId==null?startSharing():stopSharing(); }
+function startSharing(){
+  if(!navigator.geolocation){ toast('Standort nicht verfügbar'); return; }
+  watchId=navigator.geolocation.watchPosition(onPos,()=>toast('Standort-Freigabe nötig'),
+    {enableHighAccuracy:true,maximumAge:8000,timeout:20000});
+  setShareUI(true);
+}
+function stopSharing(){ if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null;} setShareUI(false); }
+function setShareUI(on){
+  document.getElementById('shareBtn').classList.toggle('on',on);
+  document.getElementById('shareTxt').textContent=on?'Teilen an':'Teilen aus';
+}
+function onPos(p){
+  const {latitude:lat,longitude:lng,accuracy,speed,heading}=p.coords;
+  updateMember(me.id,{name:me.display_name,lat,lng,accuracy,recordedAt:new Date().toISOString()});
+  const now=Date.now();
+  if(now-lastSent>12000){ lastSent=now;
+    api('/locations',{method:'POST',body:JSON.stringify({lat,lng,accuracy,speed:speed||null,heading:heading||null})}).catch(()=>{});
+  }
+}
+
+/* ---------- WebSocket (live) ---------- */
+function connectWS(){
+  if(ws) return;
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`);
+  ws.onmessage=ev=>{ try{const m=JSON.parse(ev.data);
+    if(m.type==='location') updateMember(m.userId,{lat:m.lat,lng:m.lng,battery:m.battery,recordedAt:m.recordedAt});
+  }catch{} };
+  ws.onclose=()=>{ ws=null; if(token) setTimeout(connectWS,5000); };
+}
+
+/* ---------- Menü / Modal ---------- */
+function openModal(html){ document.getElementById('modalBody').innerHTML=html; show('modal',true); }
+function closeModal(){ show('modal',false); }
+function openMenu(){
+  openModal(`<h2>Menü</h2>
+    <button class="btn line" onclick="openPlaces()">Gespeicherte Orte</button>
+    <button class="btn line mt" onclick="openOwnTracks()">OwnTracks einrichten</button>
+    <button class="btn line mt" onclick="openInvite()">Gruppe & Einladung</button>
+    <button class="btn ghost mt" onclick="logout()">Abmelden</button>`);
+}
+
+/* ---------- Orte ---------- */
+async function openPlaces(){
+  try{
+    const {places}=await api('/places');
+    drawPlaces(places);
+    const rows=places.length?places.map(p=>`<div class="place">
+        <span class="nm">${escapeHtml(p.name)}${p.is_home?' · Zuhause':''}</span>
+        <button class="rowbtn" onclick="delPlace(${p.id})">Löschen</button></div>`).join('')
+      :'<p class="small">Noch keine Orte gespeichert.</p>';
+    openModal(`<h2>Gespeicherte Orte</h2>${rows}
+      <div class="mt"><div class="field"><label>Neuer Ort (Kartenmitte)</label>
+      <input id="placeName" placeholder="z.B. Zuhause, Arbeit, Oma" /></div>
+      <button class="btn" onclick="addPlace()">Kartenmitte als Ort speichern</button>
+      <p class="small mt">Verschiebe die Karte auf den Punkt, dann speichern.</p></div>`);
+  }catch(e){ toast(e.message); }
+}
+function drawPlaces(places){
+  if(!placesLayer) return; placesLayer.clearLayers();
+  places.forEach(p=>L.circle([p.lat,p.lng],{radius:p.radius_m||100,color:'#7C6CF0',
+    fillColor:'#7C6CF0',fillOpacity:.12,weight:1.5}).bindTooltip(p.name).addTo(placesLayer));
+}
+async function addPlace(){
+  const name=val('placeName'); if(!name){ toast('Bitte einen Namen eingeben'); return; }
+  const c=map.getCenter();
+  try{ await api('/places',{method:'POST',body:JSON.stringify({name,lat:c.lat,lng:c.lng,radius:120})});
+    toast('Ort gespeichert'); openPlaces(); }catch(e){ toast(e.message); }
+}
+async function delPlace(id){ try{ await api('/places/'+id,{method:'DELETE'}); openPlaces(); }catch(e){ toast(e.message); } }
+
+/* ---------- OwnTracks ---------- */
+async function openOwnTracks(){
+  const {user}=await api('/auth/me');
+  const url=location.origin+'/owntracks/pub';
+  openModal(`<h2>OwnTracks einrichten</h2>
+    <p class="small">Installiere die App „OwnTracks" (gratis, App Store / Play Store). Dann in den Einstellungen:</p>
+    <ol class="steps">
+      <li>Modus auf <b>HTTP</b> stellen.</li>
+      <li>Bei <b>URL</b> das hier eintragen:</li>
+    </ol>
+    <div class="codebox"><span id="otUrl">${url}</span><button class="copy" onclick="copy('${url}')">Kopieren</button></div>
+    <ol class="steps" start="3">
+      <li>Bei <b>Password</b> (oder DeviceID/Token) das hier:</li>
+    </ol>
+    <div class="codebox"><span>${user.device_token}</span><button class="copy" onclick="copy('${user.device_token}')">Kopieren</button></div>
+    <ol class="steps" start="4">
+      <li>Modus <b>„Move"</b> = häufige Updates, <b>„Significant"</b> = mehr Akku.</li>
+      <li>Standort-Freigabe auf <b>„Immer"</b> erlauben.</li>
+    </ol>
+    <p class="small mt">Danach läuft OwnTracks im Hintergrund und schickt die Position automatisch hierher.</p>`);
+}
+
+/* ---------- Einladung ---------- */
+async function openInvite(){
+  const {groups}=await api('/groups');
+  const codes=groups.map(g=>`<div class="codebox"><span>${g.invite_code}</span>
+    <button class="copy" onclick="copy('${g.invite_code}')">Kopieren</button></div>`).join('');
+  openModal(`<h2>Gruppe & Einladung</h2>
+    <p class="small">Teile diesen Code mit der Person, die dich sehen soll:</p>${codes}
+    <div class="mt"><div class="field"><label>Selbst einem Code beitreten</label>
+    <input id="joinCode2" placeholder="Einladungscode" /></div>
+    <button class="btn line" onclick="joinFromModal()">Beitreten</button></div>`);
+}
+async function joinFromModal(){
+  const code=val('joinCode2');
+  try{ await api('/groups/join',{method:'POST',body:JSON.stringify({inviteCode:code})});
+    toast('Beigetreten'); closeModal(); fitted=false; loadGroup(); }catch(e){ toast(e.message); }
+}
+
+/* ---------- Helfer ---------- */
+function copy(t){ navigator.clipboard?.writeText(t).then(()=>toast('Kopiert')).catch(()=>toast('Kopieren nicht möglich')); }
+let toastT;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),2400); }
+
+/* ---------- Start ---------- */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+setMode('login');
+if(token){ afterLogin().catch(()=>logout()); }
+</script>
+</body>
+</html>
