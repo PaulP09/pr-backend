@@ -11,8 +11,9 @@ import { postLocation, getHistory, getGroupLatest } from './routes/locations.js'
 import { listPlaces, createPlace, deletePlace } from './routes/places.js';
 import { createGroup, joinGroup, myGroups } from './routes/groups.js';
 import { owntracksPub, owntracksConfig } from './routes/owntracks.js';
-import { setAvatar } from './routes/profile.js';
+import { setAvatar, setProfile } from './routes/profile.js';
 import { listMessages, postMessage } from './routes/messages.js';
+import { listFriends } from './routes/friends.js';
 import { setupWebSocket } from './ws.js';
 
 const app = express();
@@ -47,6 +48,10 @@ app.get('/owntracks/config', authMiddleware, owntracksConfig);
 
 // Profilbild
 app.post('/profile/avatar', authMiddleware, setAvatar);
+app.post('/profile', authMiddleware, setProfile);
+
+// Freunde
+app.get('/friends', authMiddleware, listFriends);
 
 // Gruppen-Chat
 app.get('/messages', authMiddleware, listMessages);

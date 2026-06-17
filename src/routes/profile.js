@@ -12,3 +12,15 @@ export async function setAvatar(req, res) {
   await pool.query(`UPDATE users SET avatar = $1 WHERE id = $2`, [avatar, req.userId]);
   res.json({ ok: true });
 }
+
+// Name + Profiltext aktualisieren
+export async function setProfile(req, res) {
+  const { displayName, bio } = req.body || {};
+  const name = (displayName || '').trim();
+  if (!name) return res.status(400).json({ error: 'Name darf nicht leer sein' });
+  await pool.query(
+    `UPDATE users SET display_name = $1, bio = $2 WHERE id = $3`,
+    [name.slice(0, 60), (bio || '').slice(0, 500), req.userId]
+  );
+  res.json({ ok: true });
+}

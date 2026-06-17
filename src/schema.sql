@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS users (
   display_name  TEXT NOT NULL,
   device_token  TEXT UNIQUE,           -- fuer OwnTracks (Hintergrund-Tracking)
   avatar        TEXT,                  -- Profilbild als data-URL
+  bio           TEXT,                  -- Profiltext
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 -- Migration fuer bereits bestehende Installationen:
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 
 -- Gruppe (z.B. "Wir beide"). Nur Mitglieder sehen sich gegenseitig.
 CREATE TABLE IF NOT EXISTS groups (

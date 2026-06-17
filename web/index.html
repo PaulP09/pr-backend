@@ -157,6 +157,38 @@
   .icon-btn{position:relative}
   .badge{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--rose);border:2px solid #fff;display:none}
 
+  /* freunde-drawer oben links */
+  .hb{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:none;background:#fff;
+    box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:18px;color:var(--ink);display:grid;place-items:center}
+  .drawer{position:fixed;top:0;bottom:0;left:0;z-index:70;width:82%;max-width:330px;background:var(--card);
+    transform:translateX(-104%);transition:transform .25s ease;box-shadow:6px 0 30px rgba(0,0,0,.25);
+    display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 18px) 0 16px}
+  .drawer.on{transform:none}
+  html[dir=rtl] .drawer{left:auto;right:0;transform:translateX(104%)}
+  html[dir=rtl] .drawer.on{transform:none}
+  .drawer h3{font-family:var(--disp);font-weight:800;font-size:21px;margin:0 20px 14px}
+  .flist{flex:1;overflow:auto}
+  .fitem{display:flex;align-items:center;gap:12px;padding:12px 20px;width:100%;border:none;background:none;
+    text-align:inherit;font-size:15px;font-weight:600;color:var(--ink)}
+  .fitem:active{background:#F1EFF6}
+  .fitem .av{width:38px;height:38px;font-size:14px}
+  .scrim{position:fixed;inset:0;z-index:69;background:rgba(26,23,38,.4);display:none}
+  .scrim.on{display:block}
+
+  /* einstellungen + profilansicht */
+  .langrow{display:flex;gap:8px;margin:4px 0}
+  .langrow button{flex:1;padding:11px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-weight:700;color:var(--ink)}
+  .langrow button.sel{border-color:var(--rose);background:#FBEEF1;color:var(--rose)}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0}
+  textarea.bio{width:100%;min-height:74px;padding:12px 14px;border:1.5px solid var(--line);border-radius:13px;font-size:15px;font-family:var(--body);outline:none;resize:vertical}
+  textarea.bio:focus{border-color:var(--rose)}
+  .sec-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 2px 6px}
+  .pview{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:8px 0}
+  .pview .big{width:92px;height:92px;border-radius:50%;overflow:hidden;display:grid;place-items:center;color:#fff;font-weight:800;font-size:30px}
+  .pview .big img{width:100%;height:100%;object-fit:cover}
+  .pview .pn{font-family:var(--disp);font-weight:800;font-size:22px}
+  .pview .pb{color:#3a3650;font-size:15px;line-height:1.5;white-space:pre-wrap;margin-top:2px}
+
   @media (prefers-reduced-motion: reduce){ .mk.live::before,.pill.on .led{animation:none} }
 </style>
 </head>
@@ -168,18 +200,18 @@
 <div class="veil on" id="auth">
   <div class="panel">
     <div class="brand">PR<span class="dot"></span></div>
-    <p class="sub">Seht, wo ihr seid.</p>
+    <p class="sub" data-i18n="tagline">Seht, wo ihr seid.</p>
     <div class="switch">
-      <button id="tabLogin" class="sel" onclick="setMode('login')">Anmelden</button>
-      <button id="tabReg" onclick="setMode('reg')">Registrieren</button>
+      <button id="tabLogin" class="sel" onclick="setMode('login')" data-i18n="tab_login">Anmelden</button>
+      <button id="tabReg" onclick="setMode('reg')" data-i18n="tab_reg">Registrieren</button>
     </div>
     <div class="field" id="fName" style="display:none">
-      <label>Name</label><input id="iName" autocomplete="name" placeholder="Wie du heißt" />
+      <label data-i18n="f_name">Name</label><input id="iName" autocomplete="name" data-i18n-ph="ph_name" placeholder="Wie du heißt" />
     </div>
-    <div class="field"><label>E-Mail</label><input id="iEmail" type="email" autocomplete="email" placeholder="du@beispiel.at" /></div>
-    <div class="field"><label>Passwort</label><input id="iPass" type="password" autocomplete="current-password" placeholder="••••••••" /></div>
+    <div class="field"><label data-i18n="f_email">E-Mail</label><input id="iEmail" type="email" autocomplete="email" placeholder="du@beispiel.at" /></div>
+    <div class="field"><label data-i18n="f_pass">Passwort</label><input id="iPass" type="password" autocomplete="current-password" placeholder="••••••••" /></div>
     <div class="err" id="authErr"></div>
-    <button class="btn" id="authBtn" onclick="submitAuth()">Anmelden</button>
+    <button class="btn" id="authBtn" onclick="submitAuth()" data-i18n="btn_login">Anmelden</button>
   </div>
 </div>
 
@@ -187,24 +219,31 @@
 <div class="veil" id="onboard">
   <div class="panel">
     <div class="brand">PR<span class="dot"></span></div>
-    <p class="sub">Verbindet euch zu zweit.</p>
-    <button class="btn" onclick="createGroup()">Neue Gruppe erstellen</button>
-    <p class="hint">Du bekommst einen Code, den du teilst.</p>
+    <p class="sub" data-i18n="ob_tagline">Verbindet euch zu zweit.</p>
+    <button class="btn" onclick="createGroup()" data-i18n="create_group">Neue Gruppe erstellen</button>
+    <p class="hint" data-i18n="create_hint">Du bekommst einen Code, den du teilst.</p>
     <div class="mt" style="height:1px;background:var(--line);margin:18px 0"></div>
-    <div class="field"><label>Mit Code beitreten</label><input id="iCode" placeholder="Einladungscode" /></div>
+    <div class="field"><label data-i18n="join_label">Mit Code beitreten</label><input id="iCode" data-i18n-ph="ph_code" placeholder="Einladungscode" /></div>
     <div class="err" id="obErr"></div>
-    <button class="btn line" onclick="joinGroup()">Beitreten</button>
-    <button class="btn ghost mt" onclick="logout()">Abmelden</button>
+    <button class="btn line" onclick="joinGroup()" data-i18n="btn_join">Beitreten</button>
+    <button class="btn ghost mt" onclick="logout()" data-i18n="logout">Abmelden</button>
   </div>
 </div>
 
 <!-- ===== App ===== -->
 <div class="topbar" id="topbar" style="display:none">
+  <button class="hb" onclick="openDrawer()">☰</button>
   <span class="wordmark">PR</span>
   <span class="spacer"></span>
   <button class="pill" id="shareBtn" onclick="toggleShare()"><span class="led"></span><span id="shareTxt">Teilen aus</span></button>
   <button class="icon-btn" id="chatBtn" onclick="openChat()">💬<span class="badge" id="chatBadge"></span></button>
   <button class="icon-btn" onclick="openMenu()">⋯</button>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <h3 data-i18n="friends">Freunde</h3>
+  <div class="flist" id="flist"></div>
 </div>
 
 <div class="sheet" id="sheet" style="display:none">
@@ -232,6 +271,43 @@ const store={
 };
 
 const API=location.origin;
+
+/* ---------- Sprachen ---------- */
+const I18N={
+  de:{tagline:"Seht, wo ihr seid.",tab_login:"Anmelden",tab_reg:"Registrieren",f_name:"Name",ph_name:"Wie du heißt",f_email:"E-Mail",f_pass:"Passwort",btn_login:"Anmelden",btn_create:"Konto erstellen",
+    ob_tagline:"Verbindet euch zu zweit.",create_group:"Neue Gruppe erstellen",create_hint:"Du bekommst einen Code, den du teilst.",join_label:"Mit Code beitreten",ph_code:"Einladungscode",btn_join:"Beitreten",logout:"Abmelden",
+    share_on:"Teilen an",share_off:"Teilen aus",you:"du",live:"live",route_today:"Weg heute",ago_no:"noch kein Standort",ago_now:"gerade eben",ago_min:"vor {n} Min",ago_hr:"vor {n} Std",ago_day:"vor {n} Tg",
+    m_chat:"Chat",m_places:"Gespeicherte Orte",m_owntracks:"OwnTracks einrichten",m_invite:"Gruppe & Einladung",m_settings:"Einstellungen",change_photo:"Profilbild ändern",
+    settings:"Einstellungen",language:"Sprache",profile:"Profil",about_me:"Über mich",save:"Speichern",autostart:"Teilen beim Öffnen automatisch starten",
+    friends:"Freunde",no_friends:"Noch keine Freunde. Teile deinen Einladungscode über Gruppe und Einladung.",
+    ot_status:"Letzte Position empfangen:",ot_never:"Noch nichts empfangen",saved:"Gespeichert",copied:"Kopiert",msg_ph:"Nachricht…",no_messages:"Noch keine Nachrichten.<br>Schreib die erste!",close:"Schließen"},
+  en:{tagline:"See where you are.",tab_login:"Log in",tab_reg:"Sign up",f_name:"Name",ph_name:"Your name",f_email:"Email",f_pass:"Password",btn_login:"Log in",btn_create:"Create account",
+    ob_tagline:"Connect the two of you.",create_group:"Create new group",create_hint:"You'll get a code to share.",join_label:"Join with a code",ph_code:"Invite code",btn_join:"Join",logout:"Log out",
+    share_on:"Sharing on",share_off:"Sharing off",you:"you",live:"live",route_today:"Today's route",ago_no:"no location yet",ago_now:"just now",ago_min:"{n} min ago",ago_hr:"{n} h ago",ago_day:"{n} d ago",
+    m_chat:"Chat",m_places:"Saved places",m_owntracks:"Set up OwnTracks",m_invite:"Group & invite",m_settings:"Settings",change_photo:"Change photo",
+    settings:"Settings",language:"Language",profile:"Profile",about_me:"About me",save:"Save",autostart:"Start sharing automatically on open",
+    friends:"Friends",no_friends:"No friends yet. Share your invite code via \"Group & invite\".",
+    ot_status:"Last position received:",ot_never:"Nothing received yet",saved:"Saved",copied:"Copied",msg_ph:"Message…",no_messages:"No messages yet.<br>Write the first one!",close:"Close"},
+  fa:{tagline:"ببینید کجا هستید.",tab_login:"ورود",tab_reg:"ثبت‌نام",f_name:"نام",ph_name:"نام شما",f_email:"ایمیل",f_pass:"رمز عبور",btn_login:"ورود",btn_create:"ساختن حساب",
+    ob_tagline:"به هم وصل شوید.",create_group:"ساختن گروه جدید",create_hint:"یک کد می‌گیرید تا به اشتراک بگذارید.",join_label:"پیوستن با کد",ph_code:"کد دعوت",btn_join:"پیوستن",logout:"خروج",
+    share_on:"اشتراک روشن",share_off:"اشتراک خاموش",you:"شما",live:"زنده",route_today:"مسیر امروز",ago_no:"هنوز موقعیتی نیست",ago_now:"همین حالا",ago_min:"{n} دقیقه پیش",ago_hr:"{n} ساعت پیش",ago_day:"{n} روز پیش",
+    m_chat:"گفتگو",m_places:"مکان‌های ذخیره‌شده",m_owntracks:"تنظیم OwnTracks",m_invite:"گروه و دعوت",m_settings:"تنظیمات",change_photo:"تغییر عکس",
+    settings:"تنظیمات",language:"زبان",profile:"نمایه",about_me:"درباره من",save:"ذخیره",autostart:"شروع خودکار اشتراک هنگام باز شدن",
+    friends:"دوستان",no_friends:"هنوز دوستی نیست. کد دعوت خود را به اشتراک بگذارید.",
+    ot_status:"آخرین موقعیت دریافت‌شده:",ot_never:"هنوز چیزی دریافت نشده",saved:"ذخیره شد",copied:"کپی شد",msg_ph:"پیام…",no_messages:"هنوز پیامی نیست.<br>اولین را بنویس!",close:"بستن"}
+};
+let lang=store.get('pr_lang')||'de';
+function t(k,vars){ let s=(I18N[lang]&&I18N[lang][k])||I18N.de[k]||k; if(vars) for(const v in vars) s=s.replace('{'+v+'}',vars[v]); return s; }
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.documentElement.dir=(lang==='fa')?'rtl':'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPh); });
+  if(typeof mode!=='undefined') setMode(mode);
+  if(typeof watchId!=='undefined') setShareUI(watchId!=null);
+  if(map) renderPeople();
+}
+function setLang(l){ lang=l; store.set('pr_lang',l); applyLang(); openSettings(); }
 let token=store.get('pr_token');
 let me=null, map=null, ws=null, watchId=null, lastSent=0, mode='login', chatOpen=false;
 const chatIds=new Set();
@@ -260,7 +336,7 @@ function setMode(m){
   document.getElementById('tabLogin').classList.toggle('sel',m==='login');
   document.getElementById('tabReg').classList.toggle('sel',m==='reg');
   document.getElementById('fName').style.display=m==='reg'?'block':'none';
-  document.getElementById('authBtn').textContent=m==='reg'?'Konto erstellen':'Anmelden';
+  document.getElementById('authBtn').textContent=m==='reg'?t('btn_create'):t('btn_login');
   document.getElementById('iPass').autocomplete=m==='reg'?'new-password':'current-password';
   document.getElementById('authErr').textContent='';
 }
@@ -305,6 +381,7 @@ function showApp(){
   loadGroup();
   connectWS();
   if(!showApp._poll) showApp._poll=setInterval(loadGroup,25000);
+  if(store.get('pr_share')==='1' && watchId==null) startSharing();
 }
 function logout(){
   stopSharing(); store.del('pr_token'); token=null; me=null;
@@ -365,12 +442,12 @@ function fitOnce(){
 
 /* ---------- People-Liste ---------- */
 function timeAgo(ts){
-  if(!ts) return 'noch kein Standort';
+  if(!ts) return t('ago_no');
   const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
-  if(s<60) return 'gerade eben';
-  if(s<3600) return 'vor '+Math.floor(s/60)+' Min';
-  if(s<86400) return 'vor '+Math.floor(s/3600)+' Std';
-  return 'vor '+Math.floor(s/86400)+' Tg';
+  if(s<60) return t('ago_now');
+  if(s<3600) return t('ago_min',{n:Math.floor(s/60)});
+  if(s<86400) return t('ago_hr',{n:Math.floor(s/3600)});
+  return t('ago_day',{n:Math.floor(s/86400)});
 }
 function renderPeople(){
   const box=document.getElementById('people');
@@ -380,15 +457,15 @@ function renderPeople(){
   });
   box.innerHTML=list.map(m=>{
     const live=isLive(m.recordedAt);
-    const meta=live?`<span class="liveTag">live</span>`:timeAgo(m.recordedAt);
+    const meta=live?`<span class="liveTag">${t('live')}</span>`:timeAgo(m.recordedAt);
     const batt=(m.battery!=null)?` · ${m.battery}%`:'';
     const isMe=me&&m.id===me.id;
     const routeOn=!!routeLayers[m.id];
     return `<div class="row">
       <div class="av" style="background:${colorFor(m.id)}">${faceHTML(m)}</div>
-      <div class="who"><b>${escapeHtml(m.name||'—')}${isMe?' (du)':''}</b>
+      <div class="who"><b>${escapeHtml(m.name||'—')}${isMe?' ('+t('you')+')':''}</b>
         <div class="meta">${meta}${batt}</div></div>
-      ${typeof m.lat==='number'?`<button class="rowbtn ${routeOn?'act':''}" onclick="toggleRoute(${m.id})">Weg heute</button>`:''}
+      ${typeof m.lat==='number'?`<button class="rowbtn ${routeOn?'act':''}" onclick="toggleRoute(${m.id})">${t('route_today')}</button>`:''}
     </div>`;
   }).join('');
 }
@@ -413,12 +490,12 @@ function startSharing(){
   if(!navigator.geolocation){ toast('Standort nicht verfügbar'); return; }
   watchId=navigator.geolocation.watchPosition(onPos,()=>toast('Standort-Freigabe nötig'),
     {enableHighAccuracy:true,maximumAge:8000,timeout:20000});
-  setShareUI(true);
+  store.set('pr_share','1'); setShareUI(true);
 }
-function stopSharing(){ if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null;} setShareUI(false); }
+function stopSharing(){ if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null;} store.set('pr_share','0'); setShareUI(false); }
 function setShareUI(on){
   document.getElementById('shareBtn').classList.toggle('on',on);
-  document.getElementById('shareTxt').textContent=on?'Teilen an':'Teilen aus';
+  document.getElementById('shareTxt').textContent=on?t('share_on'):t('share_off');
 }
 function onPos(p){
   const {latitude:lat,longitude:lng,accuracy,speed,heading}=p.coords;
@@ -451,16 +528,83 @@ function openMenu(){
       <div class="pic" style="background:${me?colorFor(me.id):'#F2566E'}">${pic}</div>
       <div class="pinfo"><b>${escapeHtml(me?me.display_name:'')}</b>
         <div class="em">${escapeHtml(me?me.email:'')}</div>
-        <button class="change" onclick="pickAvatar()">Profilbild ändern</button></div>
+        <button class="change" onclick="pickAvatar()">${t('change_photo')}</button></div>
     </div>
     <div class="menu-list">
-      <button class="menu-item" onclick="openChat()"><span class="mi">💬</span>Chat<span class="ch">›</span></button>
-      <button class="menu-item" onclick="openPlaces()"><span class="mi">📍</span>Gespeicherte Orte<span class="ch">›</span></button>
-      <button class="menu-item" onclick="openOwnTracks()"><span class="mi">📡</span>OwnTracks einrichten<span class="ch">›</span></button>
-      <button class="menu-item" onclick="openInvite()"><span class="mi">👥</span>Gruppe & Einladung<span class="ch">›</span></button>
-      <button class="menu-item danger" onclick="logout()"><span class="mi">⎋</span>Abmelden</button>
+      <button class="menu-item" onclick="openChat()"><span class="mi">💬</span>${t('m_chat')}<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openSettings()"><span class="mi">⚙️</span>${t('m_settings')}<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openPlaces()"><span class="mi">📍</span>${t('m_places')}<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openOwnTracks()"><span class="mi">📡</span>${t('m_owntracks')}<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openInvite()"><span class="mi">👥</span>${t('m_invite')}<span class="ch">›</span></button>
+      <button class="menu-item danger" onclick="logout()"><span class="mi">⎋</span>${t('logout')}</button>
     </div>
     <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="onAvatarPick(event)" />`);
+}
+
+/* ---------- Freunde-Drawer (oben links) ---------- */
+function openDrawer(){
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('drawer').classList.add('on');
+  document.querySelector('#drawer h3').textContent=t('friends');
+  loadFriends();
+}
+function closeDrawer(){
+  document.getElementById('scrim').classList.remove('on');
+  document.getElementById('drawer').classList.remove('on');
+}
+async function loadFriends(){
+  const box=document.getElementById('flist');
+  try{
+    const {friends}=await api('/friends');
+    if(!friends.length){ box.innerHTML=`<p class="small" style="padding:0 20px">${t('no_friends')}</p>`; return; }
+    box.innerHTML=friends.map(f=>{
+      colorFor(f.id);
+      const face=f.avatar?`<img src="${f.avatar}" alt="">`:initials(f.display_name);
+      return `<button class="fitem" onclick='viewProfile(${f.id})'>
+        <span class="av" style="background:${colorFor(f.id)}">${face}</span>
+        <span>${escapeHtml(f.display_name)}</span></button>`;
+    }).join('');
+    window._friends=friends;
+  }catch(e){ box.innerHTML=`<p class="small" style="padding:0 20px">${e.message}</p>`; }
+}
+function viewProfile(id){
+  const f=(window._friends||[]).find(x=>x.id===id); if(!f) return;
+  const face=f.avatar?`<img src="${f.avatar}" alt="">`:initials(f.display_name);
+  closeDrawer();
+  openModal(`<div class="pview">
+    <div class="big" style="background:${colorFor(f.id)}">${face}</div>
+    <div class="pn">${escapeHtml(f.display_name)}</div>
+    ${f.bio?`<div class="pb">${escapeHtml(f.bio)}</div>`:''}
+  </div>`);
+}
+
+/* ---------- Einstellungen ---------- */
+function openSettings(){
+  const langBtn=(code,label)=>`<button class="${lang===code?'sel':''}" onclick="setLang('${code}')">${label}</button>`;
+  const auto=store.get('pr_share')==='1';
+  const bio=me&&me.bio?escapeHtml(me.bio):'';
+  openModal(`<h2>${t('settings')}</h2>
+    <div class="sec-title">${t('language')}</div>
+    <div class="langrow">${langBtn('de','Deutsch')}${langBtn('en','English')}${langBtn('fa','فارسی')}</div>
+
+    <div class="sec-title">${t('profile')}</div>
+    <div class="field"><label>${t('f_name')}</label><input id="setName" value="${escapeHtml(me?me.display_name:'')}" /></div>
+    <div class="field"><label>${t('about_me')}</label><textarea id="setBio" class="bio" placeholder="…">${bio}</textarea></div>
+    <button class="btn" onclick="saveProfile()">${t('save')}</button>
+
+    <label class="toggle-row mt"><span>${t('autostart')}</span>
+      <input type="checkbox" id="setAuto" ${auto?'checked':''} onchange="store.set('pr_share', this.checked?'1':'0')" /></label>`);
+}
+async function saveProfile(){
+  const displayName=document.getElementById('setName').value.trim();
+  const bio=document.getElementById('setBio').value;
+  if(!displayName){ toast(t('f_name')); return; }
+  try{
+    await api('/profile',{method:'POST',body:JSON.stringify({displayName,bio})});
+    me.display_name=displayName; me.bio=bio;
+    updateMember(me.id,{name:displayName});
+    toast(t('saved')); closeModal();
+  }catch(e){ toast(e.message); }
 }
 
 /* ---------- Profilbild ---------- */
@@ -488,11 +632,11 @@ async function uploadAvatar(img){
 /* ---------- Chat ---------- */
 function openChat(){
   chatOpen=true; document.getElementById('chatBadge').style.display='none';
-  openModal(`<h2>Chat</h2>
+  openModal(`<h2>${t('m_chat')}</h2>
     <div class="chatwrap">
-      <div class="msgs" id="msgs"><p class="chat-empty">Lade…</p></div>
+      <div class="msgs" id="msgs"><p class="chat-empty">…</p></div>
       <div class="chatbar">
-        <input id="chatInput" placeholder="Nachricht…" autocomplete="off"
+        <input id="chatInput" placeholder="${t('msg_ph')}" autocomplete="off"
           onkeydown="if(event.key==='Enter')sendMsg()" />
         <button class="send" onclick="sendMsg()">➤</button>
       </div>
@@ -503,7 +647,7 @@ async function loadMessages(){
   try{
     const {messages}=await api('/messages'); chatIds.clear();
     const box=document.getElementById('msgs'); if(!box) return; box.innerHTML='';
-    if(!messages.length){ box.innerHTML='<p class="chat-empty">Noch keine Nachrichten.<br>Schreib die erste!</p>'; return; }
+    if(!messages.length){ box.innerHTML=`<p class="chat-empty">${t('no_messages')}</p>`; return; }
     messages.forEach(addMsg); scrollMsgs();
   }catch(e){ toast(e.message); }
 }
@@ -567,22 +711,22 @@ async function delPlace(id){ try{ await api('/places/'+id,{method:'DELETE'}); op
 async function openOwnTracks(){
   const {user}=await api('/auth/me');
   const url=location.origin+'/owntracks/pub';
-  openModal(`<h2>OwnTracks einrichten</h2>
-    <p class="small">Installiere die App „OwnTracks" (gratis, App Store / Play Store). Dann in den Einstellungen:</p>
-    <ol class="steps">
-      <li>Modus auf <b>HTTP</b> stellen.</li>
-      <li>Bei <b>URL</b> das hier eintragen:</li>
-    </ol>
-    <div class="codebox"><span id="otUrl">${url}</span><button class="copy" onclick="copy('${url}')">Kopieren</button></div>
-    <ol class="steps" start="3">
-      <li>Bei <b>Password</b> (oder DeviceID/Token) das hier:</li>
-    </ol>
+  const myrec=members[me.id]&&members[me.id].recordedAt;
+  const live=isLive(myrec);
+  const statusDot=`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${live?'#18B6A4':(myrec?'#F0A53C':'#C9C6D2')};margin-inline-end:7px"></span>`;
+  const statusTxt=myrec?`${t('ot_status')} ${timeAgo(myrec)}`:t('ot_never');
+  openModal(`<h2>OwnTracks</h2>
+    <div class="codebox" style="font-family:var(--body);font-size:14px">${statusDot}${statusTxt}</div>
+    <p class="small">Installiere die App „OwnTracks" (gratis). Modus auf <b>HTTP</b>, dann:</p>
+    <ol class="steps"><li>Bei <b>URL</b> eintragen:</li></ol>
+    <div class="codebox"><span>${url}</span><button class="copy" onclick="copy('${url}')">Kopieren</button></div>
+    <ol class="steps" start="2"><li>Bei <b>Password</b> deinen Token:</li></ol>
     <div class="codebox"><span>${user.device_token}</span><button class="copy" onclick="copy('${user.device_token}')">Kopieren</button></div>
-    <ol class="steps" start="4">
-      <li>Modus <b>„Move"</b> = häufige Updates, <b>„Significant"</b> = mehr Akku.</li>
-      <li>Standort-Freigabe auf <b>„Immer"</b> erlauben.</li>
+    <ol class="steps" start="3">
+      <li><b>Move</b> = häufige Updates, <b>Significant</b> = mehr Akku.</li>
+      <li>Standort-Freigabe auf <b>„Immer"</b>.</li>
     </ol>
-    <p class="small mt">Danach läuft OwnTracks im Hintergrund und schickt die Position automatisch hierher.</p>`);
+    <p class="small mt">Oben siehst du, wann zuletzt eine Position ankam — grün = frisch, orange = älter, grau = noch nichts.</p>`);
 }
 
 /* ---------- Einladung ---------- */
@@ -603,13 +747,14 @@ async function joinFromModal(){
 }
 
 /* ---------- Helfer ---------- */
-function copy(t){ navigator.clipboard?.writeText(t).then(()=>toast('Kopiert')).catch(()=>toast('Kopieren nicht möglich')); }
+function copy(txt){ navigator.clipboard?.writeText(txt).then(()=>toast(t('copied'))).catch(()=>toast('×')); }
 let toastT;
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on');
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),2400); }
 
 /* ---------- Start ---------- */
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+applyLang();
 setMode('login');
 if(token){ afterLogin().catch(()=>logout()); }
 </script>

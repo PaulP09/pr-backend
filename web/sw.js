@@ -1,6 +1,6 @@
 // Minimaler Service Worker: macht "Zum Home-Bildschirm" moeglich und
 // cached die App-Huelle. Live-Daten (API) gehen immer frisch uebers Netz.
-const CACHE = 'pr-shell-v1';
+const CACHE = 'pr-shell-v2';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
