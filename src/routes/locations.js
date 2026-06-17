@@ -53,7 +53,7 @@ export async function getHistory(req, res) {
 export async function getGroupLatest(req, res) {
   const { rows } = await pool.query(
     `SELECT DISTINCT ON (l.user_id)
-            l.user_id, u.display_name,
+            l.user_id, u.display_name, u.avatar,
             ST_Y(l.geom::geometry) AS lat, ST_X(l.geom::geometry) AS lng,
             l.accuracy_m, l.battery, l.recorded_at
      FROM locations l

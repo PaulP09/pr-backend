@@ -28,15 +28,15 @@ export function setupWebSocket(server) {
   console.log('WebSocket bereit unter /ws');
 }
 
-// Neue Position live an alle Gruppenmitglieder schicken
-export async function broadcastToGroup(fromUserId, payload) {
+// Beliebige Nachricht an alle Gruppenmitglieder (inkl. eigener Geraete)
+export async function sendToGroup(fromUserId, message) {
   const { rows } = await pool.query(
     `SELECT DISTINCT gm2.user_id FROM group_members gm1
      JOIN group_members gm2 ON gm1.group_id = gm2.group_id
      WHERE gm1.user_id = $1`,
     [fromUserId]
   );
-  const msg = JSON.stringify({ type: 'location', userId: fromUserId, ...payload });
+  const msg = JSON.stringify(message);
   for (const { user_id } of rows) {
     const set = clients.get(Number(user_id));
     if (!set) continue;
@@ -44,4 +44,9 @@ export async function broadcastToGroup(fromUserId, payload) {
       if (ws.readyState === ws.OPEN) ws.send(msg);
     }
   }
+}
+
+// Neue Position live an alle Gruppenmitglieder schicken
+export async function broadcastToGroup(fromUserId, payload) {
+  return sendToGroup(fromUserId, { type: 'location', userId: fromUserId, ...payload });
 }

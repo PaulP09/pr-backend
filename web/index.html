@@ -117,6 +117,46 @@
   .toast.on{opacity:1}
   .small{font-size:12.5px;color:var(--muted)}
   .mt{margin-top:14px}
+  /* avatare als bild */
+  .mk img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .av{overflow:hidden}
+  .av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+  /* menue neu */
+  .profile{display:flex;align-items:center;gap:14px;padding:6px 2px 18px}
+  .profile .pic{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;
+    font-weight:800;font-size:22px;overflow:hidden;flex:none;box-shadow:0 3px 10px rgba(0,0,0,.16)}
+  .profile .pic img{width:100%;height:100%;object-fit:cover}
+  .profile .pinfo b{font-family:var(--disp);font-weight:800;font-size:19px}
+  .profile .pinfo .em{font-size:13px;color:var(--muted);margin-top:1px}
+  .profile .change{display:block;margin-top:6px;font-size:12.5px;color:var(--rose);font-weight:700;background:none;border:none;padding:0}
+  .menu-list{display:flex;flex-direction:column;gap:3px}
+  .menu-item{display:flex;align-items:center;gap:13px;padding:14px 13px;border-radius:14px;border:none;
+    background:#F6F5FA;width:100%;text-align:left;font-size:15px;font-weight:600;color:var(--ink)}
+  .menu-item:active{background:#ECEAF3}
+  .menu-item .mi{width:24px;text-align:center;font-size:17px}
+  .menu-item .ch{margin-left:auto;color:#C2BFCC;font-size:18px}
+  .menu-item.danger{color:#C8324C;background:#FBEEF1}
+
+  /* chat */
+  .chatwrap{display:flex;flex-direction:column;height:74vh}
+  .msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px 12px}
+  .msg{display:flex;gap:8px;align-items:flex-end;max-width:82%}
+  .msg .ma{width:28px;height:28px;border-radius:50%;flex:none;overflow:hidden;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800}
+  .msg .ma img{width:100%;height:100%;object-fit:cover}
+  .bub{padding:9px 13px;border-radius:16px;font-size:15px;line-height:1.35;background:#F1EFF6;color:var(--ink);word-break:break-word}
+  .bub .nm{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:2px}
+  .msg.me{align-self:flex-end;flex-direction:row-reverse}
+  .msg.me .bub{background:var(--rose);color:#fff;border-bottom-right-radius:5px}
+  .msg.them .bub{border-bottom-left-radius:5px}
+  .chatbar{display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+  .chatbar input{flex:1;padding:12px 15px;border:1.5px solid var(--line);border-radius:999px;font-size:16px;outline:none}
+  .chatbar input:focus{border-color:var(--rose)}
+  .chatbar .send{flex:none;width:44px;height:44px;border-radius:50%;border:none;background:var(--rose);color:#fff;font-size:17px}
+  .chat-empty{text-align:center;color:var(--muted);font-size:14px;margin:auto;padding:30px 10px}
+  .icon-btn{position:relative}
+  .badge{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--rose);border:2px solid #fff;display:none}
+
   @media (prefers-reduced-motion: reduce){ .mk.live::before,.pill.on .led{animation:none} }
 </style>
 </head>
@@ -163,6 +203,7 @@
   <span class="wordmark">PR</span>
   <span class="spacer"></span>
   <button class="pill" id="shareBtn" onclick="toggleShare()"><span class="led"></span><span id="shareTxt">Teilen aus</span></button>
+  <button class="icon-btn" id="chatBtn" onclick="openChat()">💬<span class="badge" id="chatBadge"></span></button>
   <button class="icon-btn" onclick="openMenu()">⋯</button>
 </div>
 
@@ -192,7 +233,8 @@ const store={
 
 const API=location.origin;
 let token=store.get('pr_token');
-let me=null, map=null, ws=null, watchId=null, lastSent=0, mode='login';
+let me=null, map=null, ws=null, watchId=null, lastSent=0, mode='login', chatOpen=false;
+const chatIds=new Set();
 const members={};            // id -> {id,name,lat,lng,battery,recordedAt,marker,color}
 const routeLayers={};        // id -> polyline
 let placesLayer=null;
@@ -284,22 +326,22 @@ function initMap(){
   placesLayer=L.layerGroup().addTo(map);
 }
 function isLive(recordedAt){ return recordedAt && (Date.now()-new Date(recordedAt).getTime())<5*60*1000; }
-function markerIcon(name,color,live){
+function faceHTML(m){ return m.avatar?`<img src="${m.avatar}" alt="">`:initials(m.name); }
+function markerIcon(m,live){
   return L.divIcon({className:'',iconSize:[42,42],iconAnchor:[21,21],
-    html:`<div class="mk ${live?'live':''}" style="--c:${color}">${initials(name)}</div>`});
+    html:`<div class="mk ${live?'live':''}" style="--c:${m.color}">${faceHTML(m)}</div>`});
 }
 function updateMember(id,d){
   id=Number(id);
   const m=members[id]||(members[id]={id});
   Object.assign(m, d);
-  if(d.name) m.name=d.name;
   m.color=colorFor(id);
   const live=isLive(m.recordedAt);
   if(typeof m.lat==='number'){
     const pos=[m.lat,m.lng];
-    if(!m.marker){ m.marker=L.marker(pos,{icon:markerIcon(m.name,m.color,live)}).addTo(map);
+    if(!m.marker){ m.marker=L.marker(pos,{icon:markerIcon(m,live)}).addTo(map);
       m.marker.on('click',()=>map.flyTo(pos,15)); }
-    else { m.marker.setLatLng(pos); m.marker.setIcon(markerIcon(m.name,m.color,live)); }
+    else { m.marker.setLatLng(pos); m.marker.setIcon(markerIcon(m,live)); }
   }
   renderPeople();
 }
@@ -309,7 +351,7 @@ async function loadGroup(){
     // mich selbst sicher anzeigen, auch ohne Position
     if(me && !members[me.id]) updateMember(me.id,{name:me.display_name});
     list.forEach(r=>updateMember(r.user_id,{
-      name:r.display_name, lat:r.lat, lng:r.lng, battery:r.battery, recordedAt:r.recorded_at
+      name:r.display_name, avatar:r.avatar, lat:r.lat, lng:r.lng, battery:r.battery, recordedAt:r.recorded_at
     }));
     fitOnce();
   }catch(e){}
@@ -343,7 +385,7 @@ function renderPeople(){
     const isMe=me&&m.id===me.id;
     const routeOn=!!routeLayers[m.id];
     return `<div class="row">
-      <div class="av" style="background:${colorFor(m.id)}">${initials(m.name)}</div>
+      <div class="av" style="background:${colorFor(m.id)}">${faceHTML(m)}</div>
       <div class="who"><b>${escapeHtml(m.name||'—')}${isMe?' (du)':''}</b>
         <div class="meta">${meta}${batt}</div></div>
       ${typeof m.lat==='number'?`<button class="rowbtn ${routeOn?'act':''}" onclick="toggleRoute(${m.id})">Weg heute</button>`:''}
@@ -394,19 +436,102 @@ function connectWS(){
   ws=new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`);
   ws.onmessage=ev=>{ try{const m=JSON.parse(ev.data);
     if(m.type==='location') updateMember(m.userId,{lat:m.lat,lng:m.lng,battery:m.battery,recordedAt:m.recordedAt});
+    else if(m.type==='chat') onChatMessage(m);
   }catch{} };
   ws.onclose=()=>{ ws=null; if(token) setTimeout(connectWS,5000); };
 }
 
 /* ---------- Menü / Modal ---------- */
 function openModal(html){ document.getElementById('modalBody').innerHTML=html; show('modal',true); }
-function closeModal(){ show('modal',false); }
+function closeModal(){ show('modal',false); chatOpen=false; }
 function openMenu(){
-  openModal(`<h2>Menü</h2>
-    <button class="btn line" onclick="openPlaces()">Gespeicherte Orte</button>
-    <button class="btn line mt" onclick="openOwnTracks()">OwnTracks einrichten</button>
-    <button class="btn line mt" onclick="openInvite()">Gruppe & Einladung</button>
-    <button class="btn ghost mt" onclick="logout()">Abmelden</button>`);
+  const pic = me && me.avatar ? `<img src="${me.avatar}" alt="">` : initials(me?me.display_name:'');
+  openModal(`
+    <div class="profile">
+      <div class="pic" style="background:${me?colorFor(me.id):'#F2566E'}">${pic}</div>
+      <div class="pinfo"><b>${escapeHtml(me?me.display_name:'')}</b>
+        <div class="em">${escapeHtml(me?me.email:'')}</div>
+        <button class="change" onclick="pickAvatar()">Profilbild ändern</button></div>
+    </div>
+    <div class="menu-list">
+      <button class="menu-item" onclick="openChat()"><span class="mi">💬</span>Chat<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openPlaces()"><span class="mi">📍</span>Gespeicherte Orte<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openOwnTracks()"><span class="mi">📡</span>OwnTracks einrichten<span class="ch">›</span></button>
+      <button class="menu-item" onclick="openInvite()"><span class="mi">👥</span>Gruppe & Einladung<span class="ch">›</span></button>
+      <button class="menu-item danger" onclick="logout()"><span class="mi">⎋</span>Abmelden</button>
+    </div>
+    <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="onAvatarPick(event)" />`);
+}
+
+/* ---------- Profilbild ---------- */
+function pickAvatar(){ document.getElementById('avatarFile').click(); }
+function onAvatarPick(e){
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{ const img=new Image(); img.onload=()=>uploadAvatar(img); img.src=reader.result; };
+  reader.readAsDataURL(file);
+}
+async function uploadAvatar(img){
+  const size=256, c=document.createElement('canvas'); c.width=size; c.height=size;
+  const ctx=c.getContext('2d');
+  const s=Math.min(img.width,img.height), sx=(img.width-s)/2, sy=(img.height-s)/2;
+  ctx.drawImage(img,sx,sy,s,s,0,0,size,size);
+  const dataUrl=c.toDataURL('image/jpeg',0.72);
+  try{
+    await api('/profile/avatar',{method:'POST',body:JSON.stringify({avatar:dataUrl})});
+    me.avatar=dataUrl;
+    updateMember(me.id,{name:me.display_name,avatar:dataUrl});
+    toast('Profilbild gespeichert'); openMenu();
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- Chat ---------- */
+function openChat(){
+  chatOpen=true; document.getElementById('chatBadge').style.display='none';
+  openModal(`<h2>Chat</h2>
+    <div class="chatwrap">
+      <div class="msgs" id="msgs"><p class="chat-empty">Lade…</p></div>
+      <div class="chatbar">
+        <input id="chatInput" placeholder="Nachricht…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')sendMsg()" />
+        <button class="send" onclick="sendMsg()">➤</button>
+      </div>
+    </div>`);
+  loadMessages();
+}
+async function loadMessages(){
+  try{
+    const {messages}=await api('/messages'); chatIds.clear();
+    const box=document.getElementById('msgs'); if(!box) return; box.innerHTML='';
+    if(!messages.length){ box.innerHTML='<p class="chat-empty">Noch keine Nachrichten.<br>Schreib die erste!</p>'; return; }
+    messages.forEach(addMsg); scrollMsgs();
+  }catch(e){ toast(e.message); }
+}
+function addMsg(m){
+  if(chatIds.has(m.id)) return; chatIds.add(m.id);
+  const box=document.getElementById('msgs'); if(!box) return;
+  const empty=box.querySelector('.chat-empty'); if(empty) empty.remove();
+  const uid=Number(m.user_id!=null?m.user_id:m.userId);
+  const mine=me && uid===me.id;
+  const name=m.display_name||m.name||'';
+  const av=m.avatar?`<img src="${m.avatar}" alt="">`:initials(name);
+  const div=document.createElement('div');
+  div.className='msg '+(mine?'me':'them');
+  div.innerHTML=`<div class="ma" style="background:${colorFor(uid)}">${av}</div>
+    <div class="bub">${mine?'':`<div class="nm">${escapeHtml(name)}</div>`}${escapeHtml(m.body)}</div>`;
+  box.appendChild(div);
+}
+function scrollMsgs(){ const box=document.getElementById('msgs'); if(box) box.scrollTop=box.scrollHeight; }
+async function sendMsg(){
+  const inp=document.getElementById('chatInput'); if(!inp) return;
+  const body=inp.value.trim(); if(!body) return; inp.value='';
+  try{ const {message}=await api('/messages',{method:'POST',body:JSON.stringify({body})});
+    addMsg(message); scrollMsgs();
+  }catch(e){ toast(e.message); inp.value=body; }
+}
+function onChatMessage(m){
+  if(chatOpen){ addMsg(m); scrollMsgs(); }
+  else if(!(me && Number(m.userId)===me.id)){ document.getElementById('chatBadge').style.display='block'; }
 }
 
 /* ---------- Orte ---------- */

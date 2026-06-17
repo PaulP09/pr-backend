@@ -68,7 +68,7 @@ export function authMiddleware(req, res, next) {
 
 export async function me(req, res) {
   const { rows } = await pool.query(
-    `SELECT id, email, display_name, device_token FROM users WHERE id = $1`,
+    `SELECT id, email, display_name, device_token, avatar FROM users WHERE id = $1`,
     [req.userId]
   );
   res.json({ user: rows[0] });

@@ -8,8 +8,11 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   display_name  TEXT NOT NULL,
   device_token  TEXT UNIQUE,           -- fuer OwnTracks (Hintergrund-Tracking)
+  avatar        TEXT,                  -- Profilbild als data-URL
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Migration fuer bereits bestehende Installationen:
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
 
 -- Gruppe (z.B. "Wir beide"). Nur Mitglieder sehen sich gegenseitig.
 CREATE TABLE IF NOT EXISTS groups (
@@ -52,3 +55,13 @@ CREATE TABLE IF NOT EXISTS places (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_places_user ON places(user_id);
+
+-- Gruppen-Chat
+CREATE TABLE IF NOT EXISTS messages (
+  id         BIGSERIAL PRIMARY KEY,
+  group_id   BIGINT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_messages_group_time ON messages(group_id, created_at);

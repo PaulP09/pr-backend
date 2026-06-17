@@ -11,11 +11,13 @@ import { postLocation, getHistory, getGroupLatest } from './routes/locations.js'
 import { listPlaces, createPlace, deletePlace } from './routes/places.js';
 import { createGroup, joinGroup, myGroups } from './routes/groups.js';
 import { owntracksPub, owntracksConfig } from './routes/owntracks.js';
+import { setAvatar } from './routes/profile.js';
+import { listMessages, postMessage } from './routes/messages.js';
 import { setupWebSocket } from './ws.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -42,6 +44,13 @@ app.get('/groups', authMiddleware, myGroups);
 // OwnTracks (Hintergrund-Tracking). /pub nutzt Basic-Auth der App, nicht JWT.
 app.post('/owntracks/pub', owntracksPub);
 app.get('/owntracks/config', authMiddleware, owntracksConfig);
+
+// Profilbild
+app.post('/profile/avatar', authMiddleware, setAvatar);
+
+// Gruppen-Chat
+app.get('/messages', authMiddleware, listMessages);
+app.post('/messages', authMiddleware, postMessage);
 
 // PR Web-App ausliefern (Login, Karte, Orte) – liegt im Ordner ../web
 app.use(express.static(path.join(__dirname, '..', 'web')));
